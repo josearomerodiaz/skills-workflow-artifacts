@@ -1,0 +1,88 @@
+name: Deploy Prod
+
+# Este workflow NO se dispara directamente por un push.
+on:
+
+  # Se ejecutará como consecuencia de otro workflow.
+  workflow_run:
+
+    # Nombre EXACTO del workflow que estamos esperando.
+    workflows: ["Build and Deploy"]
+
+    # Nos interesa cuando ese workflow haya terminado.
+    types:
+      - completed
+
+
+# Permisos necesarios.
+permissions:
+
+  # Puede leer contenido del repositorio.
+  contents: read
+
+  # Puede consultar información de GitHub Actions,
+  # necesaria para acceder a artifacts de otra ejecución.
+  actions: read
+
+
+jobs:
+
+  # Job encargado del despliegue a producción.
+  prod:
+
+    # Nombre que veremos en Actions.
+    name: Deploy Prod
+
+    # Runner utilizado por este job.
+    runs-on: ubuntu-latest
+
+    # IMPORTANTE:
+    # "completed" significa que Build and Deploy ha terminado,
+    # pero podría haber terminado con ERROR.
+    #
+    # Con este if solamente ejecutamos prod
+    # si Build and Deploy terminó correctamente.
+    if: github.event.workflow_run.conclusion == 'success'
+
+    # Indicamos que este job utiliza el environment "prod".
+    environment: prod
+
+    steps:
+
+      # Descarga el artifact generado
+      # por la ejecución anterior de Build and Deploy.
+      - uses: actions/download-artifact@v8
+        with:
+
+          # Mismo nombre que usamos al subirlo.
+          name: octomatch
+
+          # Lo descargamos dentro de website/.
+          path: website
+
+          # IMPORTANTE:
+          # Aquí indicamos DE QUÉ ejecución concreta
+          # queremos descargar el artifact.
+          #
+          # workflow_run.id contiene el ID de la ejecución
+          # de "Build and Deploy" que provocó este workflow.
+          run-id: ${{ github.event.workflow_run.id }}
+
+          # Token utilizado para poder acceder
+          # al artifact de otra ejecución.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+
+      # Simulamos el deployment a producción.
+      - name: Deploy to Production
+        run: |
+
+          # Escribe un mensaje en los logs.
+          echo "Downloaded artifact contents:"
+
+          # Muestra el contenido que hemos descargado.
+          tree website
+
+          # En un proyecto real aquí iría el comando
+          # de deployment real.
+          echo "Demo deploy step: replace with your real deploy command."
