@@ -66,3 +66,55 @@ jobs:
 
           # Carpeta que queremos conservar.
           path: coverage/
+
+  # SEGUNDO JOB:
+  # Ejecutará tests End-to-End utilizando Playwright.
+  e2e:
+
+    # Nombre que veremos en GitHub Actions.
+    name: E2E Tests with Playwright
+
+    # Máquina donde ejecutaremos las pruebas.
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Descarga nuestro repositorio dentro del runner.
+      - uses: actions/checkout@v6
+
+      # Prepara Node.js.
+      - uses: actions/setup-node@v6
+        with:
+
+          # Utilizamos Node.js 24.
+          node-version: 24
+
+          # Activa la caché de dependencias de npm.
+          cache: npm
+
+      # Instala las dependencias exactamente según
+      # package-lock.json.
+      - run: npm ci
+
+      # Instala Chromium y las dependencias del sistema
+      # necesarias para ejecutar los tests de Playwright.
+      - run: npx playwright install --with-deps chromium
+
+      # Ejecuta los tests End-to-End del proyecto.
+      #
+      # Estos tests interactúan con la aplicación
+      # utilizando un navegador real automatizado.
+      - run: npm run test:e2e
+
+      # Guarda como artifact el informe HTML
+      # generado por Playwright.
+      - uses: actions/upload-artifact@v7
+        with:
+
+          # Esta vez subimos UN único archivo.
+          path: playwright-report/index.html
+
+          # IMPORTANTE:
+          # evita empaquetar el artifact en ZIP.
+          # Podremos abrir index.html directamente.
+          archive: false          
