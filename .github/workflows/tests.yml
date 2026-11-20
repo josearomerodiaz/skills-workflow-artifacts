@@ -1,0 +1,68 @@
+# Nombre del workflow que veremos en GitHub Actions.
+name: Tests
+
+# Define CUÁNDO se ejecutará.
+on:
+
+  # Se ejecutará cuando hagamos push sobre main.
+  push:
+    branches:
+      - main
+
+  # También se ejecutará cuando exista una Pull Request
+  # cuyo destino sea main.
+  pull_request:
+    branches:
+      - main
+
+# Permisos del workflow.
+permissions:
+
+  # Solo necesita leer el contenido del repositorio.
+  contents: read
+
+# Trabajos que ejecutará el workflow.
+jobs:
+
+  # Identificador interno del job.
+  coverage:
+
+    # Nombre que veremos en GitHub Actions.
+    name: Tests with Coverage
+
+    # Máquina donde se ejecutará.
+    runs-on: ubuntu-latest
+
+    # Pasos que realizará, en este orden.
+    steps:
+
+      # Descarga nuestro repositorio dentro del runner.
+      - uses: actions/checkout@v6
+
+      # Instala/configura Node.js en el runner.
+      - uses: actions/setup-node@v6
+        with:
+
+          # Usaremos Node.js 24.
+          node-version: 24
+
+          # Activa la caché de npm para acelerar instalaciones.
+          cache: npm
+
+      # Instala exactamente las dependencias del proyecto
+      # definidas en package-lock.json.
+      - run: npm ci
+
+      # Ejecuta los tests y genera el informe de cobertura.
+      # El informe se guardará en coverage/.
+      - run: npm run test:coverage
+
+      # Guarda coverage/ como artifact de GitHub Actions.
+      - uses: actions/upload-artifact@v7
+        with:
+
+          # Nombre con el que aparecerá el artifact.
+          name: test-coverage-report
+
+          # Carpeta que queremos conservar.
+          path: coverage/
