@@ -1,4 +1,3 @@
-# Workflow para compilar y desplegar Octomatch.
 name: Build and Deploy
 
 # Define CUÁNDO se ejecutará.
