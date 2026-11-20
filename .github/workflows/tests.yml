@@ -69,13 +69,15 @@ jobs:
 
   # SEGUNDO JOB:
   # Ejecutará tests End-to-End utilizando Playwright.
+  # Job que ejecuta las pruebas de navegador.
   e2e:
-
-    # Nombre que veremos en GitHub Actions.
     name: E2E Tests with Playwright
 
-    # Máquina donde ejecutaremos las pruebas.
-    runs-on: ubuntu-latest
+    # Fijamos Ubuntu 24.04 porque el proyecto utiliza
+    # Playwright 1.58.2, que no soporta Chromium
+    # sobre el Ubuntu 26.04 que actualmente puede
+    # proporcionar ubuntu-latest.
+    runs-on: ubuntu-24.04
 
     steps:
 
