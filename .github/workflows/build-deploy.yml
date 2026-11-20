@@ -1,0 +1,116 @@
+# Nombre del nuevo workflow.
+name: Build and Deploy
+
+
+# Define CUÁNDO se ejecutará.
+on:
+
+  # Permite ejecutarlo manualmente desde GitHub Actions.
+  workflow_dispatch:
+
+  # También se ejecutará automáticamente
+  # ante cualquier push a main.
+  push:
+    branches: [main]
+
+
+# Permisos del workflow.
+permissions:
+
+  # Solo necesitamos leer el repositorio.
+  contents: read
+
+
+jobs:
+
+  # ==================================================
+  # JOB 1: BUILD
+  # ==================================================
+  # Construye la aplicación y genera un artifact.
+  build:
+
+    # Utiliza un runner Ubuntu.
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Descarga el código del repositorio
+      # dentro del runner.
+      - uses: actions/checkout@v6
+
+      # Configura Node.js.
+      - uses: actions/setup-node@v6
+        with:
+
+          # Versión utilizada por el proyecto.
+          node-version: 24
+
+          # Cachea dependencias de npm para acelerar ejecuciones.
+          cache: npm
+
+      # Instala las dependencias del proyecto.
+      - run: npm ci
+
+      # Compila/construye la aplicación.
+      #
+      # El resultado quedará en la carpeta dist/.
+      - run: npm run build
+
+      # Guarda el resultado de la compilación
+      # como un artifact de GitHub Actions.
+      - uses: actions/upload-artifact@v7
+        with:
+
+          # Nombre que tendrá el artifact.
+          name: octomatch
+
+          # Directorio generado por el build.
+          path: dist
+
+
+  # ==================================================
+  # JOB 2: DEPLOY DEV
+  # ==================================================
+  dev:
+
+    # Nombre que veremos en GitHub Actions.
+    name: Deploy Dev
+
+    # IMPORTANTE:
+    # Este job depende del job "build".
+    #
+    # Por tanto, GitHub no ejecutará dev hasta
+    # que build haya terminado correctamente.
+    needs: build
+
+    # Este job utiliza OTRO runner Ubuntu.
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Descarga el artifact que creó el job build.
+      - uses: actions/download-artifact@v8
+        with:
+
+          # Tiene que coincidir exactamente con el nombre
+          # utilizado en upload-artifact.
+          name: octomatch
+
+          # Descarga el contenido dentro de website/.
+          path: website
+
+
+      # Simulamos el deployment.
+      - name: Deploy to Dev
+        run: |
+
+          # Mensaje informativo en los logs.
+          echo "Downloaded artifact contents:"
+
+          # Muestra la estructura de archivos
+          # que acabamos de descargar.
+          tree website
+
+          # En un proyecto real aquí podríamos ejecutar
+          # Azure CLI, AWS CLI, etc. para desplegar.
+          echo "Demo deploy step: replace with your real deploy command."
